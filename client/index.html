@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+	<body>
+		<h1>Chat Rooms</h1>
+		<input id="room" type="text" placeholder="Nhập tên phòng.." />
+		<button id="join">Tham gia phòng</button>
+		<button id="leave">Rời phòng</button>
+		<br />
+		<input id="message" type="text" placeholder="Nhập tin nhắn..." />
+		<button id="send">Gửi tin nhắn</button>
+		<ul id="messages"></ul>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"socket.io-client": "https://cdn.socket.io/4.8.1/socket.io.esm.min.js"
+				}
+			}
+		</script>
+		<script type="module" src="scripts.js"></script>
+	</body>
+</html>

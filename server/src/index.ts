@@ -1,6 +1,13 @@
 import express from 'express';
 import http from 'http';
-import { Server, Socket } from 'socket.io';
+import mongoose from 'mongoose';
+import { Server } from 'socket.io';
+import {
+	createProduct,
+	deleteProduct,
+	getProducts,
+	updateProduct,
+} from './controllers/product.controller';
 
 const app = express();
 const server = http.createServer(app);
@@ -11,46 +18,59 @@ const io = new Server(server, {
 	},
 });
 
-io.on('connection', (socket: Socket) => {
-	console.log(` Người dùng kết nối: ${socket.id}`);
+app.use(express.json());
+mongoose.connect('mongodb://localhost:27017/realtime-crud');
 
-	// Xử lý sự kiện tham gia phòng
-	socket.on('joinRoom', (room: string) => {
-		socket.join(room);
-		console.log(` Người dùng: ${socket.id} đã tham gia phòng`);
-		socket
-			.to(room)
-			.emit('message', ` Người dùng ${socket.id} vừa tham gia phòng`);
+mongoose.connection.on('connected', () => {
+	console.log('Kết nối thành công');
+});
+
+// Socket.IO events
+io.on('connection', (socket) => {
+	console.log('Client kết nối:', socket.id);
+
+	// Tạo sản phẩm mới
+	socket.on('create_product', async (data) => {
+		try {
+			const product = await createProduct(data);
+			io.emit('product_created', product); // Phát sự kiện cho tất cả client
+		} catch (err) {
+			console.error('Lỗi khi tạo sản phẩm:', err);
+		}
 	});
 
-	// Xử lý sự kiện rời phòng
-	socket.on('leaveRoom', (room: string) => {
-		socket.leave(room);
-		console.log(` Người dùng: ${socket.id} đã rời khỏi phòng`);
-		socket
-			.to(room)
-			.emit('message', ` Người dùng ${socket.id} vừa rời khỏi phòng`);
+	// Lấy danh sách sản phẩm
+	socket.on('get_products', async () => {
+		try {
+			const products = await getProducts();
+			socket.emit('products_list', products);
+		} catch (err) {
+			console.error('Lỗi khi lấy danh sách sản phẩm:', err);
+		}
 	});
 
-	// Xử lý tin nhắn
-	socket.on('message', (room: string, msg: string) => {
-		io.to(room).emit('message', msg);
+	// Cập nhật sản phẩm
+	socket.on('update_product', async ({ id, data }) => {
+		try {
+			const product = await updateProduct(id, data);
+			io.emit('product_updated', product); // Phát sự kiện cập nhật
+		} catch (err) {
+			console.error('Lỗi khi cập nhật sản phẩm:', err);
+		}
 	});
 
-    // Typing event
-    socket.on('typing', (room: string) => {
-        console.log(`${socket.id} đang gõ`)
-        socket.broadcast.to(room).emit('typing', `${socket.id} đang gõ`);
-    })
-
-    // Stop typing event
-    socket.on('stopTyping', (room: string) => {
-        console.log(`${socket.id} ngừng gõ`)
-        socket.broadcast.to(room).emit('stopTyping', `${socket.id} ngừng gõ`);
-    })
+	// Xóa sản phẩm
+	socket.on('delete_product', async (id) => {
+		try {
+			await deleteProduct(id);
+			io.emit('product_deleted', id); // Phát sự kiện xóa
+		} catch (err) {
+			console.error('Lỗi khi xóa sản phẩm:', err);
+		}
+	});
 
 	socket.on('disconnect', () => {
-		console.log(` Người dùng: ${socket.id} đã ngắt kết nối`);
+		console.log('Client ngắt kết nối:', socket.id);
 	});
 });
 

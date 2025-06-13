@@ -15,6 +15,15 @@ socket.on('message', (msg) => {
 	document.getElementById('messages').appendChild(li);
 });
 
+socket.on('typing', (msg) => {
+	console.log('msg: ', msg);
+	document.getElementById('typingIndicator').innerHTML = msg;
+});
+
+socket.on('stopTyping', (msg) => {
+	document.getElementById('typingIndicator').innerHTML = '';
+});
+
 const leaveRoom = () => {
 	if (currentRoom) {
 		socket.emit('leaveRoom', currentRoom);
@@ -55,4 +64,13 @@ document.getElementById('send').onclick = () => {
 	li.textContent = message;
 	document.getElementById('messages').appendChild(li);
 	document.getElementById('message').value = '';
+};
+
+document.getElementById('message').oninput = () => {
+	if (!currentRoom) return;
+	console.log('oninput');
+	socket.emit('typing', currentRoom);
+	setTimeout(() => {
+		socket.emit('stopTyping', currentRoom);
+	}, 2000);
 };

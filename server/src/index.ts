@@ -37,6 +37,18 @@ io.on('connection', (socket: Socket) => {
 		io.to(room).emit('message', msg);
 	});
 
+    // Typing event
+    socket.on('typing', (room: string) => {
+        console.log(`${socket.id} đang gõ`)
+        socket.broadcast.to(room).emit('typing', `${socket.id} đang gõ`);
+    })
+
+    // Stop typing event
+    socket.on('stopTyping', (room: string) => {
+        console.log(`${socket.id} ngừng gõ`)
+        socket.broadcast.to(room).emit('stopTyping', `${socket.id} ngừng gõ`);
+    })
+
 	socket.on('disconnect', () => {
 		console.log(` Người dùng: ${socket.id} đã ngắt kết nối`);
 	});
